@@ -3,38 +3,64 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <meta name="description" content="Juego de parejas de memoria accesible, sin datos personales."/>
+  <meta name="description" content="Juego cognitivo accesible para personas mayores: memoria por parejas, sin datos personales."/>
   <meta name="theme-color" content="#0b0b0b"/>
   <meta name="color-scheme" content="dark light"/>
+  <meta name="referrer" content="strict-origin-when-cross-origin"/>
 
-  <!-- CSP estricta, todo local -->
+  <!-- Seguridad (funciona en MAMP y GitHub Pages) -->
   <meta http-equiv="Content-Security-Policy"
         content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self';
                  img-src 'self' data:; connect-src 'self'; object-src 'none';
                  base-uri 'none'; form-action 'none'">
 
-  <title>Parejas de memoria — FALLTEM</title>
+  <!-- Open Graph / Social -->
+  <meta property="og:title" content="Parejas de Memoria — FALLTEM">
+  <meta property="og:description" content="Juego cognitivo accesible: ejercita memoria y atención, sin datos personales.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://fundacion-falltem.github.io/juego-memoria/">
+  <meta property="og:site_name" content="FALLTEM — Juegos Cognitivos">
+  <meta name="twitter:card" content="summary">
+
+  <title>Parejas de Memoria — Juegos Cognitivos</title>
+
+  <!-- Estilos -->
   <link rel="stylesheet" href="./styles.css?v=1.0">
 </head>
 
 <body>
-  <a href="#juego" class="skip">Saltar al juego</a>
+  <!-- Accesibilidad -->
+  <a href="#juego" class="skip">Saltar directamente al juego</a>
 
-  <!-- Ayuda (?) -->
+  <!-- Botón de ayuda (?) -->
   <div class="fixed-top-right">
-    <button id="aboutBtn" class="btn-ayuda" type="button" aria-haspopup="dialog"
-            aria-controls="aboutModal" aria-expanded="false" aria-label="¿Por qué este juego?">?</button>
+    <button id="aboutBtn"
+            class="btn-ayuda"
+            type="button"
+            aria-haspopup="dialog"
+            aria-controls="aboutModal"
+            aria-expanded="false"
+            aria-label="¿Por qué este juego?">
+      ?
+    </button>
   </div>
 
+  <!-- Modal “¿Por qué este juego?” (versión breve) -->
   <div id="aboutModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="aboutTitle">
     <div class="modal-card" role="document">
       <h2 id="aboutTitle" class="mt0">¿Por qué este juego?</h2>
-      <p>Entrena <strong>memoria de trabajo</strong>, <strong>atención sostenida</strong> y <strong>estrategias</strong>.
-         Sugerimos sesiones cortas (1–3 tableros), <strong>2–3 veces por semana</strong>.</p>
+      <p>
+        Este juego ejercita la <strong>memoria de trabajo</strong> y la <strong>atención</strong> de manera lúdica:
+        encontrar parejas estimula estrategias de recuerdo y concentración.
+      </p>
       <ul>
-        <li>Evidencia: entrenamientos “process-based” en mayores sanos muestran <strong>mejoras modestas</strong> en tareas entrenadas y cercanas.</li>
+        <li>Sesiones cortas recomendadas (1–2 partidas), 2–3 veces por semana.</li>
+        <li>Los efectos suelen ser modestos pero útiles si se practica con regularidad.</li>
+        <li>Sin límite de tiempo: jugá con calma.</li>
       </ul>
-      <p class="muted"><small>Actividad <strong>lúdica</strong>; no es práctica médica. No recolectamos datos personales.</small></p>
+      <p class="muted">
+        <small>Actividad <strong>lúdica</strong>; no es práctica médica. No recolectamos datos personales.</small>
+      </p>
       <div class="modal-actions">
         <button id="aboutClose" class="btn principal" type="button">Entendido</button>
       </div>
@@ -43,12 +69,12 @@
 
   <main class="wrap" role="main" aria-labelledby="titulo">
     <header class="header">
-      <h1 id="titulo">Parejas de memoria</h1>
-      <p class="intro">Encontrá todas las parejas. Sin tiempo límite.</p>
+      <h1 id="titulo">Parejas de Memoria</h1>
+      <p class="intro">Descubrí las tarjetas y encontrá las <strong>parejas iguales</strong>. Sin límite de tiempo.</p>
 
-      <section class="controles" aria-label="Controles">
+      <section class="controles" aria-label="Controles del juego">
         <label for="tamano">Tamaño:</label>
-        <select id="tamano" aria-label="Tamaño de texto">
+        <select id="tamano" aria-label="Elegir tamaño de texto">
           <option value="grande" selected>Grande</option>
           <option value="muy-grande">Muy grande</option>
         </select>
@@ -60,25 +86,33 @@
           <option value="10">10 parejas (20 cartas)</option>
         </select>
 
-        <button id="themeToggle" class="btn secundario" type="button" aria-pressed="false">Cambiar tema</button>
+        <button id="themeToggle" class="btn secundario" type="button" aria-pressed="false">
+          Cambiar tema
+        </button>
+
         <button id="btnComenzar" class="btn principal" type="button">Comenzar</button>
         <button id="btnReiniciar" class="btn secundario" type="button" hidden>Volver a jugar</button>
       </section>
     </header>
 
+    <!-- Contenedor del juego -->
     <section id="juego" class="juego" aria-live="polite"></section>
 
+    <!-- Estado del juego -->
     <section id="estado" class="estado" aria-live="polite">
       <p>Intentos: <span id="intentos">0</span> · Parejas encontradas: <span id="aciertos">0</span>/<span id="total">0</span></p>
     </section>
 
+    <!-- Footer -->
     <footer class="mini-credit" role="contentinfo" aria-label="Créditos y aviso">
       <p>
         <strong class="mini-label">Créditos y aviso:</strong>
         Desarrollado por
         <a href="https://falltem.org/" target="_blank" rel="noopener noreferrer">FALLTEM</a>
-        • Código abierto (MIT) • Uso libre por otras ONG
-        • Actividad lúdica; no es práctica médica • Sin datos personales
+        • Código abierto (MIT)
+        • Uso libre por otras ONG
+        • Actividad lúdica; no es práctica médica
+        • Sin recolección de datos personales por defecto
         <br><small>Versión: <strong id="versionLabel"></strong></small>
       </p>
     </footer>
@@ -86,6 +120,7 @@
 
   <noscript><p style="margin:1rem">Este juego necesita JavaScript para funcionar.</p></noscript>
 
+  <!-- Script (subí el parámetro ?v cuando actualices) -->
   <script src="./app.js?v=1.0" defer></script>
 </body>
 </html>
