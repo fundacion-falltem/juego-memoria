@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="description" content="Juego cognitivo accesible, sin datos personales."/>
+  <meta name="theme-color" content="#0b0b0b"/>
+  <meta name="color-scheme" content="dark light"/>
+
+  <!-- CSP estricta: todo local -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self';
+                 img-src 'self' data:; connect-src 'self'; object-src 'none';
+                 base-uri 'none'; form-action 'none'">
+
+  <title>Nombre del juego — FALLTEM</title>
+  <link rel="stylesheet" href="./styles.css?v=plantilla-1.0">
+</head>
+
+<body>
+  <!-- Skip link -->
+  <a href="#juego" class="skip">Saltar al contenido</a>
+
+  <!-- Botón de ayuda (?) fijo -->
+  <div class="fixed-top-right">
+    <button id="aboutBtn" class="btn-ayuda" type="button" aria-haspopup="dialog"
+            aria-controls="aboutModal" aria-expanded="false" aria-label="¿Por qué este juego?">?</button>
+  </div>
+
+  <!-- Modal ayuda -->
+  <div id="aboutModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="aboutTitle">
+    <div class="modal-card" role="document">
+      <h2 id="aboutTitle" class="mt0">¿Por qué este juego?</h2>
+      <p>Breve explicación del objetivo cognitivo del juego. Recomendado: sesiones cortas, 2–3 veces por semana.</p>
+      <ul>
+        <li>Basado en evidencia de entrenamiento cognitivo en personas mayores (resumen + fuente).</li>
+      </ul>
+      <p class="muted"><small>Actividad lúdica; no es práctica médica. No recolectamos datos personales.</small></p>
+      <div class="modal-actions">
+        <button id="aboutClose" class="btn principal" type="button">Entendido</button>
+      </div>
+    </div>
+  </div>
+
+  <main class="wrap" role="main" aria-labelledby="titulo">
+    <header class="header">
+      <h1 id="titulo">Nombre del juego</h1>
+      <p class="intro">Descripción muy corta del juego.</p>
+
+      <section class="controles" aria-label="Controles">
+        <!-- Ejemplo de controles genéricos; adaptá según juego -->
+        <label for="tamano">Tamaño:</label>
+        <select id="tamano" aria-label="Tamaño de texto">
+          <option value="grande" selected>Grande</option>
+          <option value="muy-grande">Muy grande</option>
+        </select>
+
+        <button id="themeToggle" class="btn secundario" type="button" aria-pressed="false">Cambiar tema</button>
+        <button id="btnComenzar" class="btn principal" type="button">Comenzar</button>
+        <button id="btnReiniciar" class="btn secundario" type="button" hidden>Volver a jugar</button>
+      </section>
+    </header>
+
+    <!-- Aquí va el contenido dinámico del juego -->
+    <section id="juego" class="juego" aria-live="polite"></section>
+
+    <!-- Estado/puntaje (opcional) -->
+    <section id="estado" class="estado" aria-live="polite" hidden>
+      <p>Estado…</p>
+    </section>
+
+    <footer class="mini-credit" role="contentinfo" aria-label="Créditos y aviso">
+      <p>
+        <strong class="mini-label">Créditos y aviso:</strong>
+        Desarrollado por
+        <a href="https://falltem.org/" target="_blank" rel="noopener noreferrer">FALLTEM</a>
+        • Código abierto (MIT)
+        • Uso libre por otras ONG
+        • Actividad lúdica; no es práctica médica
+        • Sin recolección de datos personales por defecto
+        <br><small>Versión: <strong id="versionLabel"></strong></small>
+      </p>
+    </footer>
+  </main>
+
+  <noscript><p style="margin:1rem">Este juego necesita JavaScript para funcionar.</p></noscript>
+
+  <script src="./app.js?v=plantilla-1.0" defer></script>
+</body>
+</html>
