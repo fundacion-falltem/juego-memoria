@@ -1,4 +1,4 @@
-/* ===== FALLTEM: Tema accesible base (memoria) ===== */
+/* ===== FALLTEM: Tema accesible (Memoria) ===== */
 :root{
   color-scheme: light dark;
   --fs-base: clamp(18px, 1.2vw + 14px, 22px);
@@ -42,7 +42,11 @@ body{
   -webkit-tap-highlight-color: transparent;
 }
 
-.wrap{ max-width: 980px; width: min(980px, calc(100% - 2*var(--space))); margin:0 auto; padding:var(--space) }
+.wrap{
+  max-width: 980px;
+  width: min(980px, calc(100% - 2*var(--space)));
+  margin:0 auto; padding:var(--space)
+}
 .header h1{ font-size: clamp(1.8rem, 2vw + 1rem, 2.4rem); margin:.5rem 0; font-weight:800 }
 .intro{ margin:0 0 var(--space) }
 
@@ -89,48 +93,68 @@ select{
 .mt0{ margin-top:0 }
 .modal-actions{ display:flex; gap:10px; justify-content:flex-end }
 
-/* ===== Juego: grid de cartas ===== */
+/* ===== Juego: grid de cartas (responsive real) ===== */
 .juego-grid{
-  display:grid; gap:12px; margin-top: var(--space);
-  grid-template-columns: repeat(4, 1fr);
+  display:grid;
+  gap:10px;
+  margin-top: var(--space);
+  /* Se adapta solo: intenta meter la mayor cantidad de columnas posible
+     respetando un mínimo de ancho de carta */
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
   align-items:stretch;
 }
-@media (max-width: 680px){
-  .juego-grid{ grid-template-columns: repeat(3, 1fr); gap:10px; }
+@media (min-width: 480px){
+  .juego-grid{ grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); }
 }
-@media (max-width: 420px){
-  .juego-grid{ grid-template-columns: repeat(2, 1fr); gap:10px; }
+@media (min-width: 768px){
+  .juego-grid{ grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
 }
 
-/* Carta (tamaño adaptable) */
+/* ===== Carta (más compacta y con figura grande) ===== */
 .carta{
-  position:relative; border:1px solid var(--border); background:var(--card);
-  border-radius:14px; padding:0; cursor:pointer; aspect-ratio: 3 / 4;
+  position:relative;
+  border:1px solid var(--border);
+  background:var(--card);
+  border-radius:14px;
+  padding:0;
+  cursor:pointer;
+  /* Relación más cuadrada para caber 3–4 por fila en móvil */
+  aspect-ratio: 5 / 6;
   display:flex; align-items:center; justify-content:center;
-  font-size: clamp(1.6rem, 6vw, 2.6rem);
+  /* Emoji grande: crece en pantallas chicas, limita en grandes */
+  font-size: clamp(1.8rem, 11vw, 3.2rem);
   user-select:none;
   box-shadow:0 2px 8px rgba(0,0,0,.06);
 }
 .carta:focus-visible{ outline:3px solid var(--focus-color); outline-offset:3px }
 
-/* Estados visuales (sin 3D para respetar reduce-motion) */
+/* Caras (sin 3D, con transición suave) */
 .cara-front, .cara-back{
-  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-  border-radius:14px; transition: opacity .18s ease;
+  position:absolute; inset:0;
+  display:flex; align-items:center; justify-content:center;
+  border-radius:14px;
+  transition: opacity .18s ease;
 }
+
+/* Tapa y figura */
 .carta[data-estado="oculta"] .cara-front{ opacity:0; pointer-events:none }
 .carta[data-estado="oculta"] .cara-back{ opacity:1 }
 .carta[data-estado="visible"] .cara-front{ opacity:1 }
 .carta[data-estado="visible"] .cara-back{ opacity:0; pointer-events:none }
+
+/* Resuelta: leve tinte de confirmación */
 .carta[data-estado="resuelta"]{
-  background: color-mix(in oklab, var(--btn-primary-bg) 20%, var(--card));
-  border-color: color-mix(in oklab, var(--btn-primary-bg) 60%, var(--border));
+  background: color-mix(in oklab, var(--btn-primary-bg) 18%, var(--card));
+  border-color: color-mix(in oklab, var(--btn-primary-bg) 55%, var(--border));
   color:#eafff2;
 }
 
+/* “?” más visible en la tapa de la carta */
 .cara-back{
-  font-weight:800; font-size:1.2rem; color:var(--fg);
-  background:rgba(255,255,255,.04);
+  font-weight:800;
+  font-size: clamp(1rem, 5.5vw, 1.4rem);
+  color:var(--fg);
+  background:rgba(255,255,255,.05);
 }
 
 /* Acciones genéricas */
