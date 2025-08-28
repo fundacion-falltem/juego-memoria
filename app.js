@@ -2,7 +2,7 @@
 
 document.addEventListener('DOMContentLoaded', () => {
   /* ===== Versión ===== */
-  const VERSION = "v1.1";
+  const VERSION = "v1.2";
   const versionEl = document.getElementById('versionLabel');
   if (versionEl) versionEl.textContent = VERSION;
 
@@ -23,6 +23,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const aboutBtn    = document.getElementById('aboutBtn');
   const aboutModal  = document.getElementById('aboutModal');
   const aboutClose  = document.getElementById('aboutClose');
+
+  // Audio de victoria
+  const sndWin = document.getElementById('sndWin');
+  let audioDesbloqueado = false;
 
   /* ===== Util ===== */
   const el = (tag, cls, text) => { const n=document.createElement(tag); if(cls) n.className=cls; if(text!=null) n.textContent=String(text); return n; };
@@ -170,6 +174,13 @@ document.addEventListener('DOMContentLoaded', () => {
   function finDeJuego(){
     if (pbFill) pbFill.style.width = '100%';
 
+    // Reproducir sonido de victoria si está disponible
+    if (sndWin) {
+      // si todavía no se desbloqueó, no falla; el catch evita errores de autoplay
+      sndWin.currentTime = 0;
+      sndWin.play().catch(()=>{});
+    }
+
     while (juegoEl.firstChild) juegoEl.removeChild(juegoEl.firstChild);
     const card = el('div','tarjeta');
     card.appendChild(el('p','pregunta','🎉 ¡Completaste todas las parejas!'));
@@ -203,6 +214,15 @@ document.addEventListener('DOMContentLoaded', () => {
     estadoEl.hidden = false;
     if (pbFill) pbFill.style.width = '0%';
     actualizarEstado();
+
+    // Intento de “desbloqueo” de audio en el primer gesto del usuario (iOS/Safari)
+    if (!audioDesbloqueado && sndWin){
+      sndWin.play().then(()=>{
+        sndWin.pause();
+        sndWin.currentTime = 0;
+        audioDesbloqueado = true;
+      }).catch(()=>{ /* ignorar: se desbloqueará en el siguiente gesto */ });
+    }
   }
 
   /* ===== Botones ===== */

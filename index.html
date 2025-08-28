@@ -25,7 +25,7 @@
   <title>Parejas de Memoria — Juegos Cognitivos</title>
 
   <!-- Estilos -->
-  <link rel="stylesheet" href="./styles.css?v=1.1">
+  <link rel="stylesheet" href="./styles.css?v=1.2">
 </head>
 
 <body>
@@ -124,9 +124,17 @@
     </footer>
   </main>
 
+  <!-- Audio de victoria (se “desbloquea” al primer clic del usuario) -->
+  <audio id="sndWin" preload="auto">
+    <source src="./sounds/success-fanfare.mp3" type="audio/mpeg">
+    <!-- Fallback opcional a ogg si lo agregás:
+    <source src="./sounds/success-fanfare.ogg" type="audio/ogg">
+    -->
+  </audio>
+
   <noscript><p style="margin:1rem">Este juego necesita JavaScript para funcionar.</p></noscript>
 
   <!-- Script (actualizá ?v cuando cambies) -->
-  <script src="./app.js?v=1.1" defer></script>
+  <script src="./app.js?v=1.2" defer></script>
 </body>
 </html>
