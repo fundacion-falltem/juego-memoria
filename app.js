@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let intentos = 0;
   let aciertos = 0;
   let primera = null;   // {el, valor}
-  let bloqueo = false;  // para evitar clicks mientras se muestran 2 cartas
+  let bloqueo = false;  // evita clicks mientras se comparan
 
   function actualizarEstado(){
     intentosEl.textContent = String(intentos);
@@ -109,8 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function voltear(btn){
     if (bloqueo) return;
-    const estado = btn.getAttribute('data-estado');
-    if (estado !== 'oculta') return;
+    if (btn.getAttribute('data-estado') !== 'oculta') return;
 
     btn.setAttribute('data-estado','visible');
     btn.setAttribute('aria-label',`Carta: ${btn.getAttribute('data-valor')}`);
@@ -120,13 +119,11 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Segunda carta
     const segunda = { el: btn, valor: btn.getAttribute('data-valor') };
     bloqueo = true;
     intentos++;
 
     if (primera.valor === segunda.valor){
-      // Pareja encontrada
       setTimeout(()=>{
         primera.el.setAttribute('data-estado','resuelta');
         segunda.el.setAttribute('data-estado','resuelta');
@@ -135,9 +132,8 @@ document.addEventListener('DOMContentLoaded', () => {
         aciertos++;
         primera = null; bloqueo = false; actualizarEstado();
         if (aciertos === totalParejas) finDeJuego();
-      }, 250);
+      }, 200);
     } else {
-      // No coincide → ocultar
       setTimeout(()=>{
         primera.el.setAttribute('data-estado','oculta');
         primera.el.setAttribute('aria-label','Carta oculta');
@@ -149,7 +145,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function finDeJuego(){
-    // Limpio y muestro tarjeta de fin
     while (juegoEl.firstChild) juegoEl.removeChild(juegoEl.firstChild);
     const card = el('div','tarjeta');
     card.appendChild(el('p','pregunta','🎉 ¡Completaste todas las parejas!'));
@@ -166,21 +161,17 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function iniciar(){
-    // estado inicial
     intentos = 0; aciertos = 0; primera = null; bloqueo = false;
-    totalParejas = Number(selDif.value);
+    totalParejas = Number(selDif.value || 8);
 
-    // armar mazo
     const pool = barajar(EMOJIS.slice()).slice(0, totalParejas);
-    const mazo = barajar([...pool, ...pool]); // duplico y mezclo
+    const mazo = barajar([...pool, ...pool]);
 
-    // render grid
     while (juegoEl.firstChild) juegoEl.removeChild(juegoEl.firstChild);
     const grid = el('div','juego-grid');
     mazo.forEach((v, i)=> grid.appendChild(crearCarta(v, i)));
     juegoEl.appendChild(grid);
 
-    // UI
     btnComenzar.hidden = true;
     btnReiniciar.hidden = false;
     estadoEl.hidden = false;
@@ -193,9 +184,6 @@ document.addEventListener('DOMContentLoaded', () => {
     btnComenzar.hidden = false;
     btnReiniciar.hidden = true;
     while (juegoEl.firstChild) juegoEl.removeChild(juegoEl.firstChild);
-    estadoEl.hidden = false;
     intentos = 0; aciertos = 0; actualizarEstado();
   });
-
-  // listo
 });

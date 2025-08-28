@@ -1,4 +1,4 @@
-/* ===== FALLTEM base accesible ===== */
+/* ===== FALLTEM: Tema accesible base (memoria) ===== */
 :root{
   color-scheme: light dark;
   --fs-base: clamp(18px, 1.2vw + 14px, 22px);
@@ -9,12 +9,15 @@
   --bg:#0b0b0b; --fg:#f5f5f5; --muted:#cfcfcf;
   --card:#171717; --border:#2a2a2a;
 
+  /* Marca accesible */
   --brand-green:#22c55e; --brand-teal:#0ea5e9; --brand-orange:#f97316;
 
+  /* Botones */
   --btn-primary-bg: var(--brand-green);  --btn-primary-fg:#0b0b0b;
   --btn-sec-bg:     var(--brand-teal);   --btn-sec-fg:#0b0b0b;
   --btn-info-bg:    var(--brand-orange); --btn-info-fg:#0b0b0b;
 
+  /* Estados */
   --ok:#16a34a; --bad:#dc2626; --focus-color:var(--brand-teal);
 }
 
@@ -28,7 +31,7 @@
   --ok:#15803d; --bad:#b91c1c; --focus-color:#1d4ed8;
 }
 
-/* Base */
+/* ===== Base ===== */
 *{box-sizing:border-box}
 html,body{height:100%}
 html{-webkit-text-size-adjust:100%; text-size-adjust:100%}
@@ -69,7 +72,7 @@ select{
 
 .estado{ margin-top:.6rem } .estado p{ margin:.2rem 0 }
 
-/* Ayuda */
+/* ===== Ayuda (botón + modal) ===== */
 .fixed-top-right{ position:fixed; right:12px; top:12px; z-index:10 }
 .btn-ayuda{
   background:var(--btn-info-bg); color:var(--btn-info-fg); border:0;
@@ -86,39 +89,49 @@ select{
 .mt0{ margin-top:0 }
 .modal-actions{ display:flex; gap:10px; justify-content:flex-end }
 
-/* Juego: grid de cartas */
+/* ===== Juego: grid de cartas ===== */
 .juego-grid{
   display:grid; gap:12px; margin-top: var(--space);
   grid-template-columns: repeat(4, 1fr);
+  align-items:stretch;
 }
-@media (min-width: 900px){
-  .juego-grid{ grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 680px){
+  .juego-grid{ grid-template-columns: repeat(3, 1fr); gap:10px; }
+}
+@media (max-width: 420px){
+  .juego-grid{ grid-template-columns: repeat(2, 1fr); gap:10px; }
 }
 
-/* Carta */
+/* Carta (tamaño adaptable) */
 .carta{
   position:relative; border:1px solid var(--border); background:var(--card);
-  border-radius:14px; padding:0; cursor:pointer; height:110px;
+  border-radius:14px; padding:0; cursor:pointer; aspect-ratio: 3 / 4;
   display:flex; align-items:center; justify-content:center;
-  font-size:2.2rem; user-select:none;
+  font-size: clamp(1.6rem, 6vw, 2.6rem);
+  user-select:none;
   box-shadow:0 2px 8px rgba(0,0,0,.06);
 }
 .carta:focus-visible{ outline:3px solid var(--focus-color); outline-offset:3px }
-@media (min-width: 720px){ .carta{ height:130px; font-size:2.6rem } }
 
-/* Estados visuales */
-.carta[data-estado="oculta"] .cara-front{ display:none }
-.carta[data-estado="oculta"] .cara-back{ display:flex }
-.carta[data-estado="visible"] .cara-front{ display:flex }
-.carta[data-estado="visible"] .cara-back{ display:none }
-.carta[data-estado="resuelta"]{
-  background: #0f5132; border-color:#14532d; color:#eafff2;
-}
+/* Estados visuales (sin 3D para respetar reduce-motion) */
 .cara-front, .cara-back{
   position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-  border-radius:14px;
+  border-radius:14px; transition: opacity .18s ease;
 }
-.cara-back{ font-weight:800; font-size:1.3rem; color:var(--fg); background:rgba(255,255,255,.04) }
+.carta[data-estado="oculta"] .cara-front{ opacity:0; pointer-events:none }
+.carta[data-estado="oculta"] .cara-back{ opacity:1 }
+.carta[data-estado="visible"] .cara-front{ opacity:1 }
+.carta[data-estado="visible"] .cara-back{ opacity:0; pointer-events:none }
+.carta[data-estado="resuelta"]{
+  background: color-mix(in oklab, var(--btn-primary-bg) 20%, var(--card));
+  border-color: color-mix(in oklab, var(--btn-primary-bg) 60%, var(--border));
+  color:#eafff2;
+}
+
+.cara-back{
+  font-weight:800; font-size:1.2rem; color:var(--fg);
+  background:rgba(255,255,255,.04);
+}
 
 /* Acciones genéricas */
 .acciones{
@@ -144,3 +157,9 @@ select{
 /* Tamaño muy grande */
 html.muy-grande{ font-size:125% }
 html.muy-grande body{ --fs-base: clamp(20px, 1.3vw + 16px, 24px) }
+
+/* Reduce motion */
+@media (prefers-reduced-motion: reduce){
+  *{ scroll-behavior:auto }
+  .cara-front, .cara-back{ transition:none }
+}
