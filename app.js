@@ -2,7 +2,7 @@
 
 document.addEventListener('DOMContentLoaded', () => {
   /* ===== Versión ===== */
-  const VERSION = "v1.0";
+  const VERSION = "v1.1";
   const versionEl = document.getElementById('versionLabel');
   if (versionEl) versionEl.textContent = VERSION;
 
@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const intentosEl  = document.getElementById('intentos');
   const aciertosEl  = document.getElementById('aciertos');
   const totalEl     = document.getElementById('total');
+  const pbFill      = document.getElementById('pbFill');
 
   const selTam      = document.getElementById('tamano');
   const selDif      = document.getElementById('dificultad');
@@ -88,6 +89,10 @@ document.addEventListener('DOMContentLoaded', () => {
     intentosEl.textContent = String(intentos);
     aciertosEl.textContent = String(aciertos);
     totalEl.textContent = String(totalParejas);
+    if (pbFill && totalParejas > 0){
+      const pct = Math.round((aciertos / totalParejas) * 100);
+      pbFill.style.width = pct + '%';
+    }
   }
 
   function crearCarta(valor, idx){
@@ -124,27 +129,47 @@ document.addEventListener('DOMContentLoaded', () => {
     intentos++;
 
     if (primera.valor === segunda.valor){
+      // feedback positivo
+      primera.el.classList.add('fx-ok');
+      segunda.el.classList.add('fx-ok');
+
       setTimeout(()=>{
         primera.el.setAttribute('data-estado','resuelta');
         segunda.el.setAttribute('data-estado','resuelta');
         primera.el.setAttribute('aria-label',`Pareja: ${primera.valor} (resuelta)`);
         segunda.el.setAttribute('aria-label',`Pareja: ${segunda.valor} (resuelta)`);
         aciertos++;
+        // limpiar efecto
+        setTimeout(()=>{
+          primera.el.classList.remove('fx-ok');
+          segunda.el.classList.remove('fx-ok');
+        }, 200);
+
         primera = null; bloqueo = false; actualizarEstado();
         if (aciertos === totalParejas) finDeJuego();
       }, 200);
     } else {
+      // feedback de no-coincidencia (suave)
+      primera.el.classList.add('fx-bad');
+      segunda.el.classList.add('fx-bad');
+
       setTimeout(()=>{
+        primera.el.classList.remove('fx-bad');
+        segunda.el.classList.remove('fx-bad');
+
         primera.el.setAttribute('data-estado','oculta');
         primera.el.setAttribute('aria-label','Carta oculta');
         segunda.el.setAttribute('data-estado','oculta');
         segunda.el.setAttribute('aria-label','Carta oculta');
+
         primera = null; bloqueo = false; actualizarEstado();
       }, 600);
     }
   }
 
   function finDeJuego(){
+    if (pbFill) pbFill.style.width = '100%';
+
     while (juegoEl.firstChild) juegoEl.removeChild(juegoEl.firstChild);
     const card = el('div','tarjeta');
     card.appendChild(el('p','pregunta','🎉 ¡Completaste todas las parejas!'));
@@ -162,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function iniciar(){
     intentos = 0; aciertos = 0; primera = null; bloqueo = false;
-    totalParejas = Number(selDif.value || 8);
+    totalParejas = Number(selDif?.value || 8);
 
     const pool = barajar(EMOJIS.slice()).slice(0, totalParejas);
     const mazo = barajar([...pool, ...pool]);
@@ -172,9 +197,11 @@ document.addEventListener('DOMContentLoaded', () => {
     mazo.forEach((v, i)=> grid.appendChild(crearCarta(v, i)));
     juegoEl.appendChild(grid);
 
+    // UI
     btnComenzar.hidden = true;
     btnReiniciar.hidden = false;
     estadoEl.hidden = false;
+    if (pbFill) pbFill.style.width = '0%';
     actualizarEstado();
   }
 
@@ -184,6 +211,8 @@ document.addEventListener('DOMContentLoaded', () => {
     btnComenzar.hidden = false;
     btnReiniciar.hidden = true;
     while (juegoEl.firstChild) juegoEl.removeChild(juegoEl.firstChild);
-    intentos = 0; aciertos = 0; actualizarEstado();
+    intentos = 0; aciertos = 0;
+    if (pbFill) pbFill.style.width = '0%';
+    actualizarEstado();
   });
 });

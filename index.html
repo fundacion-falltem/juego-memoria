@@ -25,7 +25,7 @@
   <title>Parejas de Memoria — Juegos Cognitivos</title>
 
   <!-- Estilos -->
-  <link rel="stylesheet" href="./styles.css?v=1.0">
+  <link rel="stylesheet" href="./styles.css?v=1.1">
 </head>
 
 <body>
@@ -98,9 +98,15 @@
     <!-- Contenedor del juego -->
     <section id="juego" class="juego" aria-live="polite"></section>
 
-    <!-- Estado del juego -->
+    <!-- Estado del juego con barra de progreso -->
     <section id="estado" class="estado" aria-live="polite">
-      <p>Intentos: <span id="intentos">0</span> · Parejas encontradas: <span id="aciertos">0</span>/<span id="total">0</span></p>
+      <p>
+        Intentos: <span id="intentos">0</span> ·
+        Parejas encontradas: <span id="aciertos">0</span>/<span id="total">0</span>
+      </p>
+      <div class="progresoBar" aria-hidden="true">
+        <div id="pbFill"></div>
+      </div>
     </section>
 
     <!-- Footer -->
@@ -120,7 +126,7 @@
 
   <noscript><p style="margin:1rem">Este juego necesita JavaScript para funcionar.</p></noscript>
 
-  <!-- Script (subí el parámetro ?v cuando actualices) -->
-  <script src="./app.js?v=1.0" defer></script>
+  <!-- Script (actualizá ?v cuando cambies) -->
+  <script src="./app.js?v=1.1" defer></script>
 </body>
 </html>
