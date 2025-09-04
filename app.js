@@ -2,7 +2,7 @@
 
 document.addEventListener('DOMContentLoaded', () => {
   /* ===== Versión ===== */
-  const VERSION = "v1.2";
+  const VERSION = "v1.3 (FALLTEM light + a11y grid)";
   const versionEl = document.getElementById('versionLabel');
   if (versionEl) versionEl.textContent = VERSION;
 
@@ -32,29 +32,30 @@ document.addEventListener('DOMContentLoaded', () => {
   const el = (tag, cls, text) => { const n=document.createElement(tag); if(cls) n.className=cls; if(text!=null) n.textContent=String(text); return n; };
   const barajar = arr => { for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]];} return arr; };
 
-  /* ===== Tema ===== */
+  /* ===== Tema (LIGHT por defecto) ===== */
+  function labelFor(mode){
+    return mode === 'dark' ? 'Usar modo claro' : 'Usar modo oscuro';
+  }
   function applyTheme(mode){
-    const m=(mode==='light'||mode==='dark')?mode:'dark';
+    const m = (mode==='dark') ? 'dark' : 'light'; // default light
     document.documentElement.setAttribute('data-theme', m);
     if (themeBtn){
-      const isDark = (m === 'dark');
-      themeBtn.textContent = isDark ? '🌞 Cambiar a claro' : '🌙 Cambiar a oscuro';
-      themeBtn.setAttribute('aria-pressed', String(isDark));
+      themeBtn.textContent = labelFor(m);
+      themeBtn.setAttribute('aria-pressed', String(m==='dark'));
     }
     const metaTheme = document.querySelector('meta[name="theme-color"]');
-    if (metaTheme) metaTheme.setAttribute('content', m === 'dark' ? '#0b0b0b' : '#ffffff');
+    if (metaTheme) metaTheme.setAttribute('content', m === 'dark' ? '#0b0b0b' : '#f8fbf4');
   }
   (function initTheme(){
-    let mode='dark';
+    let mode='light';
     try{
       const stored=localStorage.getItem('theme');
       if(stored==='light'||stored==='dark') mode=stored;
-      else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) mode='light';
     }catch{}
     applyTheme(mode);
   })();
   themeBtn?.addEventListener('click', ()=>{
-    const cur=document.documentElement.getAttribute('data-theme')||'dark';
+    const cur=document.documentElement.getAttribute('data-theme')||'light';
     const next=cur==='dark'?'light':'dark';
     try{ localStorage.setItem('theme', next);}catch{}
     applyTheme(next);
@@ -116,6 +117,11 @@ document.addEventListener('DOMContentLoaded', () => {
     return btn;
   }
 
+  // helper: obtiene el grid actual (si existe)
+  function getGrid(){
+    return juegoEl.querySelector('.juego-grid');
+  }
+
   function voltear(btn){
     if (bloqueo) return;
     if (btn.getAttribute('data-estado') !== 'oculta') return;
@@ -130,6 +136,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const segunda = { el: btn, valor: btn.getAttribute('data-valor') };
     bloqueo = true;
+    // bloqueamos accesible el grid durante la comparación
+    const grid = getGrid();
+    grid?.setAttribute('aria-busy','true');
+
     intentos++;
 
     if (primera.valor === segunda.valor){
@@ -143,6 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
         primera.el.setAttribute('aria-label',`Pareja: ${primera.valor} (resuelta)`);
         segunda.el.setAttribute('aria-label',`Pareja: ${segunda.valor} (resuelta)`);
         aciertos++;
+
         // limpiar efecto
         setTimeout(()=>{
           primera.el.classList.remove('fx-ok');
@@ -150,6 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 200);
 
         primera = null; bloqueo = false; actualizarEstado();
+        grid?.removeAttribute('aria-busy');
         if (aciertos === totalParejas) finDeJuego();
       }, 200);
     } else {
@@ -167,6 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
         segunda.el.setAttribute('aria-label','Carta oculta');
 
         primera = null; bloqueo = false; actualizarEstado();
+        grid?.removeAttribute('aria-busy');
       }, 600);
     }
   }
@@ -176,9 +189,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Reproducir sonido de victoria si está disponible
     if (sndWin) {
-      // si todavía no se desbloqueó, no falla; el catch evita errores de autoplay
-      sndWin.currentTime = 0;
-      sndWin.play().catch(()=>{});
+      try {
+        sndWin.currentTime = 0;
+        sndWin.play().catch(()=>{});
+      } catch {}
     }
 
     while (juegoEl.firstChild) juegoEl.removeChild(juegoEl.firstChild);
@@ -205,6 +219,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     while (juegoEl.firstChild) juegoEl.removeChild(juegoEl.firstChild);
     const grid = el('div','juego-grid');
+    grid.setAttribute('role','grid');
+    grid.setAttribute('aria-label','Tablero de cartas');
+    grid.setAttribute('aria-busy','false');
+
     mazo.forEach((v, i)=> grid.appendChild(crearCarta(v, i)));
     juegoEl.appendChild(grid);
 
@@ -215,6 +233,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (pbFill) pbFill.style.width = '0%';
     actualizarEstado();
 
+    // Foco inicial a la primera carta para teclado
+    const first = grid.querySelector('.carta');
+    first?.focus({ preventScroll:true });
+
     // Intento de “desbloqueo” de audio en el primer gesto del usuario (iOS/Safari)
     if (!audioDesbloqueado && sndWin){
       sndWin.play().then(()=>{
@@ -224,6 +246,25 @@ document.addEventListener('DOMContentLoaded', () => {
       }).catch(()=>{ /* ignorar: se desbloqueará en el siguiente gesto */ });
     }
   }
+
+  /* ===== Navegación con flechas en el grid ===== */
+  document.addEventListener('keydown', (e)=>{
+    const grid = getGrid();
+    if (!grid) return;
+    const items = Array.from(grid.querySelectorAll('.carta'));
+    const idx = items.indexOf(document.activeElement);
+    if (idx < 0) return;
+
+    const cols = getComputedStyle(grid).gridTemplateColumns.split(' ').length;
+    let next = null;
+
+    if (e.key==='ArrowRight') next = items[idx+1];
+    if (e.key==='ArrowLeft')  next = items[idx-1];
+    if (e.key==='ArrowDown')  next = items[idx+cols];
+    if (e.key==='ArrowUp')    next = items[idx-cols];
+
+    if (next){ e.preventDefault(); next.focus(); }
+  });
 
   /* ===== Botones ===== */
   btnComenzar?.addEventListener('click', iniciar);
