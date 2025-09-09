@@ -244,3 +244,26 @@ document.addEventListener('DOMContentLoaded', () => {
   // HUD inicial coherente
   setHUD();
 });
+
+// Registro del Service Worker (PWA)
+(function registerSW(){
+  if (!('serviceWorker' in navigator)) return;
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js').then(reg => {
+      // “Suave”: si hay uno nuevo esperando, pedimos activarlo
+      if (reg.waiting) reg.waiting.postMessage('SKIP_WAITING');
+
+      reg.addEventListener('updatefound', () => {
+        const sw = reg.installing;
+        if (!sw) return;
+        sw.addEventListener('statechange', () => {
+          // Cuando el nuevo SW se instala y hay uno viejo controlando, podés avisar “Hay nueva versión”
+          if (sw.state === 'installed' && navigator.serviceWorker.controller) {
+            // Opcional: mostrar toast/botón de recarga
+            // location.reload();
+          }
+        });
+      });
+    }).catch(console.error);
+  });
+})();
