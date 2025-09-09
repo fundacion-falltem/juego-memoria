@@ -183,10 +183,17 @@ a.btn{ text-decoration:none } /* por si un CTA final es <a> */
 
 
 /* Lógica visual compartida con otros juegos */
-[data-theme="light"] .fab--help  { background: var(--accent-2); color:#072a32; }
-[data-theme="light"] .fab--theme { background: #1f2733; color:#fff; }
-[data-theme="dark"]  .fab--help,
-[data-theme="dark"]  .fab--theme { background: var(--accent-2); color:#0a0a0a; }
+[data-theme="light"] .fab--help,
+[data-theme="light"] .fab--theme {
+  background: #1f2733;  /* oscuro */
+  color: #fff;
+}
+
+[data-theme="dark"] .fab--help,
+[data-theme="dark"] .fab--theme {
+  background: var(--accent-2); /* celeste */
+  color: #072a32;
+}
 
 /* ===== Modal ===== */
 .modal{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:30 }
@@ -201,6 +208,62 @@ a.btn{ text-decoration:none } /* por si un CTA final es <a> */
 }
 .mt0{ margin-top:0 }
 .modal-actions{ display:flex; gap:10px; justify-content:flex-end }
+
+/* —— Modal: afinado visual y accesible —— */
+.modal-card {
+  text-align: left;                 /* cuerpo a la izquierda para lectura cómoda */
+}
+
+.modal-card h2,
+.modal-card h3 {
+  text-align: center;               /* títulos centrados */
+  margin-top: .2rem;
+  margin-bottom: .6rem;
+  font-weight: 900;
+}
+
+.modal-card p {
+  margin: .4rem 0 .8rem;
+}
+
+.modal-card ul {
+  margin: .2rem 0 .9rem;
+  padding-left: 1.15rem;            /* bullets alineados */
+}
+
+.modal-card li {
+  margin: .25rem 0;
+}
+
+.modal-card .muted {
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.modal-card a {
+  color: inherit;                   /* respeta tema claro/oscuro */
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Botonera del modal: a la derecha en desktop, centrada en móvil */
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: .8rem;
+}
+
+@media (max-width: 640px) {
+  .modal-actions { justify-content: center; }
+}
+
+/* Si el modal queda muy alto, aseguramos scroll interno suave */
+.modal-card {
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+}
+
 
 /* ===== Skip link ===== */
 .skip{ position:absolute; left:-9999px; top:auto }
