@@ -1,279 +1,177 @@
 'use strict';
 
 document.addEventListener('DOMContentLoaded', () => {
-  /* ===== Versión ===== */
-  const VERSION = "v1.3 (FALLTEM light + a11y grid)";
-  const versionEl = document.getElementById('versionLabel');
-  if (versionEl) versionEl.textContent = VERSION;
+  /* ====== Estado ====== */
+  const S = {
+    size: 'grande',    // 'grande' | 'muy-grande'
+    pairs: 8,          // 6 | 8 | 10
+    attempts: 0,
+    found: 0,
+    sel: [],           // cartas volteadas (máx. 2)
+    lock: false,
+  };
 
-  /* ===== Refs ===== */
-  const juegoEl     = document.getElementById('juego');
-  const estadoEl    = document.getElementById('estado');
-  const intentosEl  = document.getElementById('intentos');
-  const aciertosEl  = document.getElementById('aciertos');
-  const totalEl     = document.getElementById('total');
-  const pbFill      = document.getElementById('pbFill');
+  /* ====== Refs ====== */
+  const $tablero     = document.getElementById('tablero');
+  const $btnStart    = document.getElementById('btnComenzar');
+  const $selTam      = document.getElementById('tamano');
+  const $selDif      = document.getElementById('dificultad');
+  const $hudInt      = document.getElementById('intentos');
+  const $hudFound    = document.getElementById('encontradas');
 
-  const selTam      = document.getElementById('tamano');
-  const selDif      = document.getElementById('dificultad');
-  const btnComenzar = document.getElementById('btnComenzar');
-  const btnReiniciar= document.getElementById('btnReiniciar');
+  const $aboutBtn    = document.getElementById('aboutBtn');
+  const $aboutModal  = document.getElementById('aboutModal');
+  const $aboutClose  = document.getElementById('aboutClose');
+  const $themeBtn    = document.getElementById('themeToggle');
 
-  const themeBtn    = document.getElementById('themeToggle');
-  const aboutBtn    = document.getElementById('aboutBtn');
-  const aboutModal  = document.getElementById('aboutModal');
-  const aboutClose  = document.getElementById('aboutClose');
+  /* ====== Util ====== */
+  const shuffle = a => { for (let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
+  const nPairs  = v => parseInt(String(v),10) || 8;
 
-  // Audio de victoria
-  const sndWin = document.getElementById('sndWin');
-  let audioDesbloqueado = false;
+  const SYMBOLS = [
+    '🍎','🍌','🍒','🍇','🍋','🍉','🍑','🥝','🍐','🥥',
+    '⭐','🌙','☀️','🌈','🔥','❄️','⚽','🏀','🎾','🏈',
+    '🚗','🚕','🚲','🚀','✈️','🚁','🚤','🛵','🚂','🚜',
+    '🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐸','🦋',
+    '🎻','🥁','🎺','🎹','🎷','🪗','🎸','🎲','🧩','🧸'
+  ];
 
-  /* ===== Util ===== */
-  const el = (tag, cls, text) => { const n=document.createElement(tag); if(cls) n.className=cls; if(text!=null) n.textContent=String(text); return n; };
-  const barajar = arr => { for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]];} return arr; };
+  const setHUD = () => {
+    $hudInt.textContent = String(S.attempts);
+    $hudFound.textContent = `${S.found}/${S.pairs}`;
+  };
 
-  /* ===== Tema (LIGHT por defecto) ===== */
-  function labelFor(mode){
-    return mode === 'dark' ? 'Usar modo claro' : 'Usar modo oscuro';
-  }
-  function applyTheme(mode){
-    const m = (mode==='dark') ? 'dark' : 'light'; // default light
-    document.documentElement.setAttribute('data-theme', m);
-    if (themeBtn){
-      themeBtn.textContent = labelFor(m);
-      themeBtn.setAttribute('aria-pressed', String(m==='dark'));
-    }
-    const metaTheme = document.querySelector('meta[name="theme-color"]');
-    if (metaTheme) metaTheme.setAttribute('content', m === 'dark' ? '#0b0b0b' : '#f8fbf4');
-  }
-  (function initTheme(){
-    let mode='light';
-    try{
-      const stored=localStorage.getItem('theme');
-      if(stored==='light'||stored==='dark') mode=stored;
-    }catch{}
-    applyTheme(mode);
-  })();
-  themeBtn?.addEventListener('click', ()=>{
-    const cur=document.documentElement.getAttribute('data-theme')||'light';
-    const next=cur==='dark'?'light':'dark';
-    try{ localStorage.setItem('theme', next);}catch{}
-    applyTheme(next);
-  });
+  function makeCard(sym){
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'card';                // TAPADA (sin is-flipped)
+    b.dataset.symbol = sym;
+    b.setAttribute('aria-pressed','false');
+    b.setAttribute('aria-label','Carta boca abajo');
 
-  /* ===== Tamaño ===== */
-  function aplicarTam(){
-    const muy = selTam?.value === 'muy-grande';
-    document.documentElement.classList.toggle('muy-grande', !!muy);
-    try{ localStorage.setItem('mem_tamano', muy ? 'muy-grande' : 'grande'); }catch{}
-  }
-  selTam?.addEventListener('change', aplicarTam);
-  try{ const pref=localStorage.getItem('mem_tamano'); if(pref==='muy-grande') selTam.value='muy-grande'; }catch{} aplicarTam();
+    const span = document.createElement('span');
+    span.className = 'emoji';
+    span.textContent = sym;
+    span.setAttribute('aria-hidden','true');
 
-  /* ===== Modal ayuda ===== */
-  function openAbout(){ aboutModal?.setAttribute('aria-hidden','false'); aboutClose?.focus(); }
-  function closeAbout(){ aboutModal?.setAttribute('aria-hidden','true'); }
-  aboutBtn?.addEventListener('click', openAbout);
-  aboutClose?.addEventListener('click', closeAbout);
-  aboutModal?.addEventListener('click', (e)=>{ if(e.target===aboutModal) closeAbout(); });
-  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeAbout(); });
-
-  /* ===== Juego de memoria ===== */
-  const EMOJIS = ["🍎","🍐","🍊","🍌","🍇","🍋","🍓","🍉","🍈","🍑",
-                  "🐶","🐱","🐭","🐹","🐰","🐻","🐼","🐨","🐯","🦊",
-                  "🚗","🚌","🚲","🚕","🚑","🚒","🚜","✈️","⛵","🚆",
-                  "🎵","🎹","🥁","🎺","🎻","🎸","🎧","📚","🖥️","📷"];
-
-  let totalParejas = 8;
-  let intentos = 0;
-  let aciertos = 0;
-  let primera = null;   // {el, valor}
-  let bloqueo = false;  // evita clicks mientras se comparan
-
-  function actualizarEstado(){
-    intentosEl.textContent = String(intentos);
-    aciertosEl.textContent = String(aciertos);
-    totalEl.textContent = String(totalParejas);
-    if (pbFill && totalParejas > 0){
-      const pct = Math.round((aciertos / totalParejas) * 100);
-      pbFill.style.width = pct + '%';
-    }
+    b.appendChild(span);
+    b.addEventListener('click', () => onFlip(b));
+    return b;
   }
 
-  function crearCarta(valor, idx){
-    const btn = el('button','carta');
-    btn.type = 'button';
-    btn.setAttribute('data-estado','oculta');
-    btn.setAttribute('aria-label','Carta oculta');
-    btn.setAttribute('data-valor', valor);
-    btn.setAttribute('data-idx', String(idx));
-
-    const front = el('div','cara-front', valor);
-    const back  = el('div','cara-back','?');
-    btn.appendChild(front); btn.appendChild(back);
-
-    btn.addEventListener('click', ()=> voltear(btn));
-    btn.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); btn.click(); }});
-    return btn;
+  function buildDeck(pairs){
+    const pool = shuffle([...SYMBOLS]).slice(0, pairs);
+    return shuffle([...pool, ...pool]);
   }
 
-  // helper: obtiene el grid actual (si existe)
-  function getGrid(){
-    return juegoEl.querySelector('.juego-grid');
+  function renderBoard(){
+    $tablero.innerHTML = '';
+    S.attempts = 0; S.found = 0; S.sel = []; S.lock = false;
+    const deck = buildDeck(S.pairs);
+    const frag = document.createDocumentFragment();
+    for (const s of deck) frag.appendChild(makeCard(s));
+    $tablero.appendChild(frag);
+    setHUD();
+    $tablero.scrollIntoView({ behavior:'smooth', block:'start' });
   }
 
-  function voltear(btn){
-    if (bloqueo) return;
-    if (btn.getAttribute('data-estado') !== 'oculta') return;
+  function onFlip(card){
+    if (S.lock) return;
+    if (card.classList.contains('is-flipped') || card.classList.contains('is-matched')) return;
 
-    btn.setAttribute('data-estado','visible');
-    btn.setAttribute('aria-label',`Carta: ${btn.getAttribute('data-valor')}`);
+    card.classList.add('is-flipped');
+    card.setAttribute('aria-pressed','true');
+    S.sel.push(card);
 
-    if (!primera){
-      primera = { el: btn, valor: btn.getAttribute('data-valor') };
-      return;
-    }
+    if (S.sel.length === 2){
+      S.lock = true;
+      S.attempts++; setHUD();
+      const [a,b] = S.sel;
+      const ok = a.dataset.symbol === b.dataset.symbol;
 
-    const segunda = { el: btn, valor: btn.getAttribute('data-valor') };
-    bloqueo = true;
-    // bloqueamos accesible el grid durante la comparación
-    const grid = getGrid();
-    grid?.setAttribute('aria-busy','true');
-
-    intentos++;
-
-    if (primera.valor === segunda.valor){
-      // feedback positivo
-      primera.el.classList.add('fx-ok');
-      segunda.el.classList.add('fx-ok');
-
-      setTimeout(()=>{
-        primera.el.setAttribute('data-estado','resuelta');
-        segunda.el.setAttribute('data-estado','resuelta');
-        primera.el.setAttribute('aria-label',`Pareja: ${primera.valor} (resuelta)`);
-        segunda.el.setAttribute('aria-label',`Pareja: ${segunda.valor} (resuelta)`);
-        aciertos++;
-
-        // limpiar efecto
+      if (ok){
+        a.classList.add('is-matched');
+        b.classList.add('is-matched');
+        a.style.pointerEvents = 'none';
+        b.style.pointerEvents = 'none';
+        S.found++; S.sel = []; S.lock = false; setHUD();
+        if (S.found >= S.pairs){
+          setTimeout(()=> alert(`¡Muy bien! Encontraste las ${S.pairs} parejas en ${S.attempts} intentos.`), 150);
+        }
+      } else {
         setTimeout(()=>{
-          primera.el.classList.remove('fx-ok');
-          segunda.el.classList.remove('fx-ok');
-        }, 200);
-
-        primera = null; bloqueo = false; actualizarEstado();
-        grid?.removeAttribute('aria-busy');
-        if (aciertos === totalParejas) finDeJuego();
-      }, 200);
-    } else {
-      // feedback de no-coincidencia (suave)
-      primera.el.classList.add('fx-bad');
-      segunda.el.classList.add('fx-bad');
-
-      setTimeout(()=>{
-        primera.el.classList.remove('fx-bad');
-        segunda.el.classList.remove('fx-bad');
-
-        primera.el.setAttribute('data-estado','oculta');
-        primera.el.setAttribute('aria-label','Carta oculta');
-        segunda.el.setAttribute('data-estado','oculta');
-        segunda.el.setAttribute('aria-label','Carta oculta');
-
-        primera = null; bloqueo = false; actualizarEstado();
-        grid?.removeAttribute('aria-busy');
-      }, 600);
+          a.classList.remove('is-flipped'); b.classList.remove('is-flipped');
+          a.setAttribute('aria-pressed','false'); b.setAttribute('aria-pressed','false');
+          S.sel = []; S.lock = false;
+        }, 700);
+      }
     }
   }
 
-  function finDeJuego(){
-    if (pbFill) pbFill.style.width = '100%';
-
-    // Reproducir sonido de victoria si está disponible
-    if (sndWin) {
-      try {
-        sndWin.currentTime = 0;
-        sndWin.play().catch(()=>{});
-      } catch {}
-    }
-
-    while (juegoEl.firstChild) juegoEl.removeChild(juegoEl.firstChild);
-    const card = el('div','tarjeta');
-    card.appendChild(el('p','pregunta','🎉 ¡Completaste todas las parejas!'));
-    card.appendChild(el('p',null,`Intentos: ${intentos} · Parejas: ${aciertos}/${totalParejas}`));
-    const acciones = el('div','acciones');
-    const btnOtra = el('button','btn principal','Jugar de nuevo');
-    btnOtra.addEventListener('click', iniciar);
-    acciones.appendChild(btnOtra);
-    card.appendChild(acciones);
-    juegoEl.appendChild(card);
-
-    btnReiniciar.hidden = false;
-    btnComenzar.hidden  = true;
+  /* ====== Preferencias / Tema ====== */
+  function applySize(){
+    const xl = S.size === 'muy-grande';
+    document.documentElement.classList.toggle('muy-grande', xl);
+    try { localStorage.setItem('mem_size', S.size); } catch {}
   }
 
-  function iniciar(){
-    intentos = 0; aciertos = 0; primera = null; bloqueo = false;
-    totalParejas = Number(selDif?.value || 8);
-
-    const pool = barajar(EMOJIS.slice()).slice(0, totalParejas);
-    const mazo = barajar([...pool, ...pool]);
-
-    while (juegoEl.firstChild) juegoEl.removeChild(juegoEl.firstChild);
-    const grid = el('div','juego-grid');
-    grid.setAttribute('role','grid');
-    grid.setAttribute('aria-label','Tablero de cartas');
-    grid.setAttribute('aria-busy','false');
-
-    mazo.forEach((v, i)=> grid.appendChild(crearCarta(v, i)));
-    juegoEl.appendChild(grid);
-
-    // UI
-    btnComenzar.hidden = true;
-    btnReiniciar.hidden = false;
-    estadoEl.hidden = false;
-    if (pbFill) pbFill.style.width = '0%';
-    actualizarEstado();
-
-    // Foco inicial a la primera carta para teclado
-    const first = grid.querySelector('.carta');
-    first?.focus({ preventScroll:true });
-
-    // Intento de “desbloqueo” de audio en el primer gesto del usuario (iOS/Safari)
-    if (!audioDesbloqueado && sndWin){
-      sndWin.play().then(()=>{
-        sndWin.pause();
-        sndWin.currentTime = 0;
-        audioDesbloqueado = true;
-      }).catch(()=>{ /* ignorar: se desbloqueará en el siguiente gesto */ });
+  function applyTheme(mode){
+    const m = (mode === 'dark') ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', m);
+    try{ localStorage.setItem('theme', m); }catch{}
+    if ($themeBtn){
+      $themeBtn.textContent = (m==='dark' ? '🌞' : '🌙');
+      $themeBtn.setAttribute('aria-pressed', String(m==='dark'));
+      $themeBtn.setAttribute('aria-label', m==='dark' ? 'Usar modo claro' : 'Usar modo oscuro');
     }
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', m==='dark' ? '#0b0b0b' : '#f8fbf4');
   }
 
-  /* ===== Navegación con flechas en el grid ===== */
-  document.addEventListener('keydown', (e)=>{
-    const grid = getGrid();
-    if (!grid) return;
-    const items = Array.from(grid.querySelectorAll('.carta'));
-    const idx = items.indexOf(document.activeElement);
-    if (idx < 0) return;
+  // Restaurar preferencias
+  (function initPrefs(){
+    try{
+      const t = localStorage.getItem('theme');
+      applyTheme(t === 'dark' ? 'dark' : 'light');
 
-    const cols = getComputedStyle(grid).gridTemplateColumns.split(' ').length;
-    let next = null;
+      const s = localStorage.getItem('mem_size');
+      if (s === 'grande' || s === 'muy-grande'){
+        S.size = s; if ($selTam) $selTam.value = s;
+      }
+      const p = localStorage.getItem('mem_pairs');
+      if (p){ const n = nPairs(p); if (n){ S.pairs = n; if ($selDif) $selDif.value = String(n); } }
+    }catch{}
+    applySize();
+    setHUD();
+  })();
 
-    if (e.key==='ArrowRight') next = items[idx+1];
-    if (e.key==='ArrowLeft')  next = items[idx-1];
-    if (e.key==='ArrowDown')  next = items[idx+cols];
-    if (e.key==='ArrowUp')    next = items[idx-cols];
-
-    if (next){ e.preventDefault(); next.focus(); }
+  /* ====== Eventos ====== */
+  $btnStart?.addEventListener('click', () => {
+    if ($selTam) S.size = $selTam.value;
+    if ($selDif) S.pairs = nPairs($selDif.value);
+    try{
+      localStorage.setItem('mem_size', S.size);
+      localStorage.setItem('mem_pairs', String(S.pairs));
+    }catch{}
+    applySize();
+    renderBoard();
   });
 
-  /* ===== Botones ===== */
-  btnComenzar?.addEventListener('click', iniciar);
-  btnReiniciar?.addEventListener('click', ()=>{
-    btnComenzar.hidden = false;
-    btnReiniciar.hidden = true;
-    while (juegoEl.firstChild) juegoEl.removeChild(juegoEl.firstChild);
-    intentos = 0; aciertos = 0;
-    if (pbFill) pbFill.style.width = '0%';
-    actualizarEstado();
+  $selTam?.addEventListener('change', e => { S.size = e.target.value; applySize(); });
+  $selDif?.addEventListener('change', e => { S.pairs = nPairs(e.target.value); try{ localStorage.setItem('mem_pairs', String(S.pairs)); }catch{} });
+
+  $themeBtn?.addEventListener('click', ()=>{
+    const cur = document.documentElement.getAttribute('data-theme') || 'light';
+    applyTheme(cur === 'dark' ? 'light' : 'dark');
   });
+
+  // Modal ayuda
+  function openAbout(){ if (!$aboutModal) return; $aboutModal.setAttribute('aria-hidden','false'); document.body.classList.add('modal-open'); $aboutClose?.focus(); }
+  function closeAbout(){ if (!$aboutModal) return; $aboutModal.setAttribute('aria-hidden','true'); document.body.classList.remove('modal-open'); }
+  $aboutBtn?.addEventListener('click', openAbout);
+  $aboutClose?.addEventListener('click', closeAbout);
+  $aboutModal?.addEventListener('click', (e)=>{ if(e.target === $aboutModal) closeAbout(); });
+  document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') closeAbout(); });
+
+  /* ====== No generar tablero al cargar ====== */
 });

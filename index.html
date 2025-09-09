@@ -1,66 +1,58 @@
 <!doctype html>
-<html lang="es-AR">
+<html lang="es-AR" data-theme="light">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <meta name="description" content="Juego cognitivo accesible para personas mayores: memoria por parejas, sin datos personales."/>
-  <meta name="theme-color" content="#0b0b0b"/>
-  <meta name="color-scheme" content="dark light"/>
-  <meta name="referrer" content="strict-origin-when-cross-origin"/>
-
-  <!-- Seguridad (funciona en MAMP y GitHub Pages) -->
+  <meta name="description" content="Juego de memoria accesible para personas mayores: encontrá parejas iguales, sin datos personales."/>
+  <meta name="theme-color" content="#f8fbf4"/>
+  <meta name="color-scheme" content="light dark"/>
   <meta http-equiv="Content-Security-Policy"
         content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self';
                  img-src 'self' data:; connect-src 'self'; object-src 'none';
                  base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="strict-origin-when-cross-origin"/>
 
-  <!-- Open Graph / Social -->
-  <meta property="og:title" content="Parejas de Memoria — FALLTEM">
-  <meta property="og:description" content="Juego cognitivo accesible: ejercita memoria y atención, sin datos personales.">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://fundacion-falltem.github.io/juego-memoria/">
-  <meta property="og:site_name" content="FALLTEM — Juegos Cognitivos">
-  <meta name="twitter:card" content="summary">
-
-  <title>Parejas de Memoria — Juegos Cognitivos</title>
-
-  <!-- Estilos -->
-  <link rel="stylesheet" href="./styles.css?v=1.2">
+  <title>Parejas de Memoria — FALLTEM</title>
+  <link rel="stylesheet" href="./styles.css?v=mem-2.3.1">
 </head>
-
 <body>
-  <!-- Accesibilidad -->
-  <a href="#juego" class="skip">Saltar directamente al juego</a>
+  <!-- Skip link -->
+  <a class="skip" href="#tablero">Saltar al tablero</a>
 
-  <!-- Botón de ayuda (?) -->
-  <div class="fixed-top-right">
-    <button id="aboutBtn"
-            class="btn-ayuda"
-            type="button"
-            aria-haspopup="dialog"
-            aria-controls="aboutModal"
-            aria-expanded="false"
-            aria-label="¿Por qué este juego?">
-      ?
-    </button>
-  </div>
+  <!-- FABs (ayuda/tema) -->
+  <div class="fixed-top-right fab-stack">
+  <button class="fab fab--help" id="aboutBtn" aria-label="¿Por qué este juego?">?</button>
+  <button class="fab fab--theme" id="themeToggle" aria-label="Usar modo oscuro">🌙</button>
+</div>
 
-  <!-- Modal “¿Por qué este juego?” (versión breve) -->
+  <!-- Modal ayuda -->
   <div id="aboutModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="aboutTitle">
     <div class="modal-card" role="document">
       <h2 id="aboutTitle" class="mt0">¿Por qué este juego?</h2>
-      <p>
-        Este juego ejercita la <strong>memoria de trabajo</strong> y la <strong>atención</strong> de manera lúdica:
-        encontrar parejas estimula estrategias de recuerdo y concentración.
-      </p>
+
+      <p>Este ejercicio está inspirado en tareas de <strong>memoria de trabajo</strong> y <strong>aprendizaje visual</strong>.
+        Practicar encontrar parejas ayuda a estimular:</p>
       <ul>
-        <li>Sesiones cortas recomendadas (1–2 partidas), 2–3 veces por semana.</li>
-        <li>Los efectos suelen ser modestos pero útiles si se practica con regularidad.</li>
-        <li>Sin límite de tiempo: jugá con calma.</li>
+        <li><strong>Memoria visual</strong> (retener la ubicación de los símbolos).</li>
+        <li><strong>Atención sostenida</strong> (seguir buscando sin distraerse).</li>
+        <li><strong>Estrategia</strong> (recordar intentos previos y reducir errores).</li>
       </ul>
-      <p class="muted">
-        <small>Actividad <strong>lúdica</strong>; no es práctica médica. No recolectamos datos personales.</small>
-      </p>
+
+      <h3>Cómo se juega</h3>
+      <ul>
+        <li>Elegí <strong>Tamaño</strong> y <strong>Dificultad</strong>, luego tocá <strong>Comenzar</strong>.</li>
+        <li>Volteá de a dos cartas. Si coinciden, quedan descubiertas.</li>
+        <li><strong>Sin límite de tiempo</strong>: jugá con calma.</li>
+      </ul>
+
+      <h3>Sugerencias</h3>
+      <ul>
+        <li><strong>6–10 rondas por sesión</strong>, <strong>2–3 veces por semana</strong>.</li>
+        <li>Si es fácil, aumentá la dificultad.</li>
+      </ul>
+
+      <p class="muted"><small>Actividad <strong>lúdica</strong>; no es práctica médica. No almacenamos datos personales.</small></p>
+
       <div class="modal-actions">
         <button id="aboutClose" class="btn principal" type="button">Entendido</button>
       </div>
@@ -73,68 +65,47 @@
       <p class="intro">Descubrí las tarjetas y encontrá las <strong>parejas iguales</strong>. Sin límite de tiempo.</p>
 
       <section class="controles" aria-label="Controles del juego">
-        <label for="tamano">Tamaño:</label>
-        <select id="tamano" aria-label="Elegir tamaño de texto">
-          <option value="grande" selected>Grande</option>
-          <option value="muy-grande">Muy grande</option>
-        </select>
+        <div class="control control--tam">
+          <label for="tamano">Tamaño:</label>
+          <select id="tamano" aria-label="Elegir tamaño de interfaz">
+            <option value="grande" selected>Grande</option>
+            <option value="muy-grande">Muy grande</option>
+          </select>
+        </div>
 
-        <label for="dificultad">Dificultad:</label>
-        <select id="dificultad" aria-label="Cantidad de parejas">
-          <option value="6">6 parejas (12 cartas)</option>
-          <option value="8" selected>8 parejas (16 cartas)</option>
-          <option value="10">10 parejas (20 cartas)</option>
-        </select>
+        <div class="control control--dif">
+          <label for="dificultad">Dificultad:</label>
+          <select id="dificultad" aria-label="Elegir dificultad (cantidad de parejas)">
+            <option value="6">6 parejas (12 cartas)</option>
+            <option value="8" selected>8 parejas (16 cartas)</option>
+            <option value="10">10 parejas (20 cartas)</option>
+          </select>
+        </div>
 
-        <button id="themeToggle" class="btn secundario" type="button" aria-pressed="false">
-          Cambiar tema
-        </button>
-
-        <button id="btnComenzar" class="btn principal" type="button">Comenzar</button>
-        <button id="btnReiniciar" class="btn secundario" type="button" hidden>Volver a jugar</button>
+        <div class="control control--start">
+          <button id="btnComenzar" class="btn principal">Comenzar</button>
+        </div>
       </section>
     </header>
 
-    <!-- Contenedor del juego -->
-    <section id="juego" class="juego" aria-live="polite"></section>
-
-    <!-- Estado del juego con barra de progreso -->
-    <section id="estado" class="estado" aria-live="polite">
-      <p>
-        Intentos: <span id="intentos">0</span> ·
-        Parejas encontradas: <span id="aciertos">0</span>/<span id="total">0</span>
-      </p>
-      <div class="progresoBar" aria-hidden="true">
-        <div id="pbFill"></div>
-      </div>
+    <section class="estado" aria-live="polite">
+      <p>Intentos: <span id="intentos">0</span> · Parejas encontradas: <span id="encontradas">0/0</span></p>
     </section>
 
-    <!-- Footer -->
+    <section id="tablero" class="tablero" aria-label="Tablero de cartas"></section>
+
     <footer class="mini-credit" role="contentinfo" aria-label="Créditos y aviso">
       <p>
         <strong class="mini-label">Créditos y aviso:</strong>
-        Desarrollado por
-        <a href="https://falltem.org/" target="_blank" rel="noopener noreferrer">FALLTEM</a>
-        • Código abierto (MIT)
-        • Uso libre por otras ONG
-        • Actividad lúdica; no es práctica médica
-        • Sin recolección de datos personales por defecto
-        <br><small>Versión: <strong id="versionLabel"></strong></small>
+        Desarrollado por <a href="https://falltem.org/" target="_blank" rel="noopener noreferrer">FALLTEM</a>
+        • Código abierto (MIT) • Uso libre por otras ONG • Actividad lúdica; no es práctica médica
+        • Sin recolección de datos personales
+        <small>Versión: <strong>Memoria v2.3.1</strong></small>
       </p>
     </footer>
   </main>
 
-  <!-- Audio de victoria (se “desbloquea” al primer clic del usuario) -->
-  <audio id="sndWin" preload="auto">
-    <source src="./sounds/success-fanfare.mp3" type="audio/mpeg">
-    <!-- Fallback opcional a ogg si lo agregás:
-    <source src="./sounds/success-fanfare.ogg" type="audio/ogg">
-    -->
-  </audio>
-
-  <noscript><p style="margin:1rem">Este juego necesita JavaScript para funcionar.</p></noscript>
-
-  <!-- Script (actualizá ?v cuando cambies) -->
-  <script src="./app.js?v=1.2" defer></script>
+  <noscript><p>Este juego necesita JavaScript para funcionar.</p></noscript>
+  <script src="./app.js?v=mem-2.3.1" defer></script>
 </body>
 </html>
